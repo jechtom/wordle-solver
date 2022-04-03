@@ -22,4 +22,10 @@ startWordScoreSortCommand.AddArgument(new Argument<string>("input"));
 startWordScoreSortCommand.SetHandler<string>(StartWordScoreSort.HandleAsync, startWordScoreSortCommand.Arguments.ToArray());
 rootCommand.AddCommand(startWordScoreSortCommand);
 
+var interactiveCommand = new Command("interactive", "Starts interactive game session.");
+interactiveCommand.AddArgument(new Argument<int>("length"));
+interactiveCommand.AddArgument(new Argument<string>("input"));
+interactiveCommand.SetHandler<int, string>(Interactive.HandleAsync, interactiveCommand.Arguments.ToArray());
+rootCommand.AddCommand(interactiveCommand);
+
 await rootCommand.InvokeAsync(args);

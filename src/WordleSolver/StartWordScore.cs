@@ -18,14 +18,70 @@ namespace WordleSolver
             string[] allWords = await File.ReadAllLinesAsync(input);
             Console.WriteLine($"Done reading. Words: { allWords.Length }");
 
+            using (var writer = new StreamWriter(output))
+            {
+                await ScoreWords(
+                    allWords,
+                    new Hint[0],
+                    tryFindSolutionBasedOnHints: true,
+                    new ActionBlock<ScoredWord>(v => writer.WriteLine($"{v.Word};{v.Green};{v.Yellow}"))
+                );
+            }
+
+            Console.WriteLine($"Processing done.");
+        }
+
+        public static async Task ScoreWords(IEnumerable<string> allWords, Hint[] hints, bool tryFindSolutionBasedOnHints, ActionBlock<ScoredWord> targetBlock)
+        {
+            // limit possible word based on hints
+            if (hints.Any() && tryFindSolutionBasedOnHints)
+            {
+                int countBeforeLimit = allWords.Count();
+                allWords = allWords.Where(w => hints.All(h => h.CanBeWord(w))).ToArray();
+                Console.WriteLine($"Words: {allWords.Count()} of {countBeforeLimit} (hints filtering applied)");
+            }
+            else
+            {
+                Console.WriteLine($"Words: {allWords.Count()} (no hint filtering)");
+            }
+
+            // gray letters based on hints
+            var grayLetters = new HashSet<char>();
+            foreach (var hint in hints)
+            {
+                grayLetters.UnionWith(hint.GetGrayAndNotPresentLetters());
+            }
+
             int maxDegreeOrParallelism = Environment.ProcessorCount;
             Console.WriteLine($"MaxDegreeOfParallelism: {maxDegreeOrParallelism}");
 
-            using var writer = new StreamWriter(output);
-
             // prepare pipeline
-            var calculateScoreBlock = new TransformBlock<string, (string word, int green, int yellow)>(w =>
+            var calculateScoreBlock = new TransformBlock<string, ScoredWord>(w =>
             {
+                // how many waster letters?
+                int wasted = 0;
+                for (int i = 0; i < w.Length; i++)
+                {
+                    // gray letter?
+                    if (grayLetters.Contains(w[i]))
+                    {
+                        wasted++;
+                        continue;
+                    }
+
+                    if (!tryFindSolutionBasedOnHints)
+                    {
+                        // letter used on this position before?
+                        for (int j = 0; j < hints.Length; j++)
+                        {
+                            if (hints[j].Word[i] == w[i]) wasted++;
+                            break;
+                        }
+                    }
+                }
+
+                wasted *= allWords.Count(); // score based on count of tested words
+
                 // calculate score score for using this word as guess for all possible words
                 int totalGreen = 0;
                 int totalYellow = 0;
@@ -38,15 +94,10 @@ namespace WordleSolver
                     totalGreen += score.green;
                     totalYellow += score.yellow;
                 }
-                return (w, totalGreen, totalYellow);
+                return new ScoredWord() with { Word = w, Green = totalGreen, Yellow = totalYellow, WastedOpportunities = wasted };
             }, new ExecutionDataflowBlockOptions() { MaxDegreeOfParallelism = maxDegreeOrParallelism, });
 
-            var writeActionBlock = new ActionBlock<(string word, int green, int yellow)>(v =>
-            {
-                writer.WriteLine($"{v.word};{v.green};{v.yellow}");
-            }, new ExecutionDataflowBlockOptions() {  MaxDegreeOfParallelism = 1 });
-
-            calculateScoreBlock.LinkTo(writeActionBlock, new DataflowLinkOptions()
+            calculateScoreBlock.LinkTo(targetBlock, new DataflowLinkOptions()
             {
                 PropagateCompletion = true
             });
@@ -55,8 +106,8 @@ namespace WordleSolver
             Console.WriteLine($"Processing...");
             foreach (var w in allWords) calculateScoreBlock.Post(w);
             calculateScoreBlock.Complete();
-            await writeActionBlock.Completion;
-            Console.WriteLine($"Processing done.");
+            await targetBlock.Completion;
+            Console.WriteLine($"Scoring completed.");
         }
     }
 }

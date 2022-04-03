@@ -1,5 +1,7 @@
 # wordle-solver
 
+This is just for-fun prototype playground.
+
 ## Commands
 
 ### Filter 5 Letter Words
@@ -18,6 +20,12 @@ dotnet run --project .\src\WordleSolver\WordleSolver.csproj -- start-word-score 
 
 ```
 dotnet run --project .\src\WordleSolver\WordleSolver.csproj -- start-word-score-sort ".\data\words_alpha-length-5-start-scores.txt"
+```
+
+### Start Interactive Play Session
+
+```
+dotnet run --configuration Release --project .\src\WordleSolver\WordleSolver.csproj -- interactive 5 ".\data\words_alpha-length-5.txt"
 ```
 
 

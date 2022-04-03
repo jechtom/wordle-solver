@@ -34,6 +34,7 @@ namespace WordleSolver
                     Yellow = int.Parse(splitted[2]) 
                 };
             })
+                .Select(sw => sw.CalculateDefaultScore())
                 .Aggregate(aggregator, (a, w) => a.UpdateWithValue(w));
 
             Console.WriteLine($"Done.");
@@ -41,25 +42,10 @@ namespace WordleSolver
             Console.WriteLine($"Results (from largest score):");
             foreach (var item in aggregator.GetSortedDescending())
             {
-                Console.WriteLine($" - '{item.Word?.ToUpperInvariant()}' score={item?.Score}");
+                Console.WriteLine($" - '{item.Word.ToUpperInvariant()}' score={item.Score}");
             }
 
             Console.WriteLine($"End of list.");
-        }
-
-        class ScoredWord
-        {
-            public int Green { get; set; }
-            public int Yellow { get; set; }
-            public int Score => Green * 15 + Yellow * 10; // experimental scoring
-            //public int Score => Green * 100 + Yellow * 10; // experimental scoring
-            public string? Word { get; set; }
-        }
-
-        class ScoredWordComparer : IComparer<ScoredWord>
-        {
-            public int Compare(ScoredWord? x, ScoredWord? y) => 
-                (x ?? throw new InvalidOperationException()).Score.CompareTo((y ?? throw new InvalidOperationException()).Score);
         }
     }
 }
