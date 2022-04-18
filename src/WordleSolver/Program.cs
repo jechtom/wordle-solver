@@ -28,4 +28,10 @@ interactiveCommand.AddArgument(new Argument<string>("input"));
 interactiveCommand.SetHandler<int, string>(Interactive.HandleAsync, interactiveCommand.Arguments.ToArray());
 rootCommand.AddCommand(interactiveCommand);
 
+var beeSolverCommand = new Command("bee", "Solves spelling bee.");
+beeSolverCommand.AddArgument(new Argument<string>("input"));
+beeSolverCommand.AddArgument(new Argument<string>("letters"));
+beeSolverCommand.SetHandler<string, string>(BeeSolver.HandleAsync, beeSolverCommand.Arguments.ToArray());
+rootCommand.AddCommand(beeSolverCommand);
+
 await rootCommand.InvokeAsync(args);

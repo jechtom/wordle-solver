@@ -28,6 +28,11 @@ dotnet run --project .\src\WordleSolver\WordleSolver.csproj -- start-word-score-
 dotnet run --configuration Release --project .\src\WordleSolver\WordleSolver.csproj -- interactive 5 ".\data\words_alpha-length-5.txt"
 ```
 
+### Spelling Bee Solver
+
+```
+dotnet run --project .\src\WordleSolver\WordleSolver.csproj -- bee ".\data\words_alpha.txt" CLPIMOT
+```
 
 ## List Of English Words
 

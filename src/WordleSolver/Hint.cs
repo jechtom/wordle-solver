@@ -8,8 +8,10 @@ namespace WordleSolver
 {
     public record Hint
     {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public string Word { get; init; }
         public HintValue[] Hints { get; init; }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         
         public static Hint ParseHints(string word, string hintsString)
         {
